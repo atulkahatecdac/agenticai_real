@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Alice Johnson",
+    "skills": ["Python", "ML", "Reinforcement Learning", "Agentic AI"],
+    "experience_years": 5,
+    "projects": ["Multi-agent systems", "Autonomous Agents"],
+    "statement": "I have designed agentic AI systems for optimizing autonomous workflows."
+  },
+  {
+    "name": "Bob Smith",
+    "skills": ["Java", "Spring", "Cloud Architecture"],
+    "experience_years": 4,
+    "projects": ["Web backend services"],
+    "statement": "I am interested in AI but mostly backend development experience."
+  },
+  {
+    "name": "Carol Lee",
+    "skills": ["Python", "NLP", "Reinforcement Learning", "Agentic AI"],
+    "experience_years": 6,
+    "projects": ["Chatbots", "Multi-agent planning"],
+    "statement": "I have led multiple projects in agentic NLP applications."
+  },
+  {
+    "name": "David Kim",
+    "skills": ["Python", "ML", "CV"],
+    "experience_years": 3,
+    "projects": ["Computer Vision pipelines"],
+    "statement": "Interested in AI research, limited experience in agentic systems."
+  },
+  {
+    "name": "Eva Patel",
+    "skills": ["Python", "Agentic AI", "RL", "ML Ops"],
+    "experience_years": 7,
+    "projects": ["Autonomous decision systems", "RL frameworks"],
+    "statement": "I have architected agentic AI systems for large-scale deployment."
+  },
+  {
+    "name": "Frank Liu",
+    "skills": ["Python", "Deep Learning"],
+    "experience_years": 2,
+    "projects": ["Image Classification"],
+    "statement": "Looking to move into agentic AI."
+  },
+  {
+    "name": "Grace Chen",
+    "skills": ["Python", "Agentic AI", "RL", "Multi-agent systems"],
+    "experience_years": 5,
+    "projects": ["Distributed agentic platforms"],
+    "statement": "Strong background in agentic AI and multi-agent architectures."
+  },
+  {
+    "name": "Henry Adams",
+    "skills": ["JavaScript", "React", "UI/UX"],
+    "experience_years": 4,
+    "projects": ["Frontend AI dashboards"],
+    "statement": "UI specialist, limited AI experience."
+  },
+  {
+    "name": "Ivy Wang",
+    "skills": ["Python", "ML", "Agentic AI", "RL"],
+    "experience_years": 6,
+    "projects": ["Autonomous agent frameworks", "Simulation environments"],
+    "statement": "Experience architecting agentic AI systems for research and industry."
+  },
+  {
+    "name": "Jack Lee",
+    "skills": ["Python", "NLP", "ML"],
+    "experience_years": 5,
+    "projects": ["Chatbots", "Language models"],
+    "statement": "Interested in agentic AI, limited practical experience."
+  }
+]
