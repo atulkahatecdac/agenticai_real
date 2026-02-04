@@ -15,7 +15,7 @@ async def main():
             
             # Get Bitcoin price
             result = await session.call_tool("get_cryptocurrency_price", {
-                "crypto": "dogecoin",
+                "crypto": "bitcoin",
             })
             print(result.content[0].text)
 
