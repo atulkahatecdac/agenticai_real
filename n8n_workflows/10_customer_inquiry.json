@@ -112,7 +112,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer "
             },
             {
               "name": "Content-Type",
