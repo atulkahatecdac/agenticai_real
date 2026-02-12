@@ -1,0 +1,362 @@
+{
+  "name": "6_customer_complaint",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json['Your Email'] }}\n\n{{ $json['Problem Description'] }}",
+        "options": {
+          "systemMessage": "=You are an IT operations assistant.\n\nGiven this request:\n{{ $json['Problem Description'] }}\n\nFrom this user:\n{{ $json['Your Email'] }}\n\nClassify:\n1. Category (Access / Bug / Data / Infra / Other)\n2. Urgency (Low / Medium / High)\n3. Needs human approval? (Yes / No)\n\nRespond as JSON containing the following:\nUser email\nProblem\nCategory\nUrgency\nNeeds human approval?"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -528,
+        -208
+      ],
+      "id": "a92434fc-5a05-4943-8160-d5fe09d035d0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -16
+      ],
+      "id": "2a0d8f86-d9bf-4e7f-8523-3a8d90b51c2d",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "eyaO4Vf1gJCs1KgI",
+          "name": "Local-Ollama"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "newdelthis@gmail.com",
+        "subject": "Urgent Customer Issue",
+        "message": "=User  {{ JSON.parse($json.output)[\"User Email\"] }} has raised an urgent issue. Please work on it on priority.\n\nIssue details: {{ JSON.parse($json.output)[\"Problem\"] }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        -192
+      ],
+      "id": "3962100b-ca99-45c0-89de-ba9d8d24ef60",
+      "name": "Send a message",
+      "webhookId": "ca91d827-9532-4712-9567-ab541095e30b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LMedC1Cba6iLoS4B",
+          "name": "ekahate-gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=Access related problem reported by user  {{ JSON.parse($json.output)[\"User Email\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        32,
+        -16
+      ],
+      "id": "c0bf45ab-bd60-4c78-889d-4d839dd04b7a",
+      "name": "Discord",
+      "webhookId": "affc50a9-6c48-48a0-aacd-39d816e55838",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "90swkzAg6EkWZ74g",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "table": {
+          "__rl": true,
+          "value": "user_complaints",
+          "mode": "list",
+          "cachedResultName": "user_complaints"
+        },
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "email",
+              "value": "={{ JSON.parse($json.output)[\"User Email\"] }}"
+            },
+            {
+              "column": "problem",
+              "value": "={{ JSON.parse($json.output)[\"Problem\"] }}"
+            },
+            {
+              "column": "category",
+              "value": "={{ JSON.parse($json.output)[\"Category\"] }}"
+            },
+            {
+              "column": "urgency",
+              "value": "={{ JSON.parse($json.output)[\"Urgency\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        48,
+        176
+      ],
+      "id": "495545b5-836d-42ed-bcea-4fb9ba4f6a87",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "mySql": {
+          "id": "ujCiIyVZA4to7uqO",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ece1b87c-55a5-4f00-9452-7d02c6c163c2",
+              "leftValue": "={{ JSON.parse($json.output).Urgency }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        -192
+      ],
+      "id": "3395ca17-3f90-4234-9703-d9e8bb753ca0",
+      "name": "High Urgency"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b1799b00-c633-4cb4-9fea-e431df308f5a",
+              "leftValue": "={{ JSON.parse($json.output).Category }}",
+              "rightValue": "Access",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        -16
+      ],
+      "id": "1de80d49-79ab-44c6-aae1-2219933aab0e",
+      "name": "Category == \"Access\""
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a1719b6a-516f-4a70-9538-8bf231e0660f",
+              "leftValue": "={{ JSON.parse($json.output)[\"Needs human approval?\"] }}",
+              "rightValue": "Yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        144
+      ],
+      "id": "f0d252e2-a008-4421-b17c-285506f81d50",
+      "name": "Human Approval == Yes"
+    },
+    {
+      "parameters": {
+        "formTitle": "Register Complaint",
+        "formFields": {
+          "values": [
+            {
+              "fieldName": "Your Email",
+              "fieldLabel": "Customer Email",
+              "requiredField": true
+            },
+            {
+              "fieldName": "Problem Description",
+              "fieldLabel": "Please describe your complaint/issue in a few sentences",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [
+        -736,
+        -208
+      ],
+      "id": "288455de-60f3-408b-8999-9217216bd33f",
+      "name": "Customer Complaint Received",
+      "webhookId": "a631fb40-ac93-4f46-8bcb-5e804c53406b"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "High Urgency",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Category == \"Access\"",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Human Approval == Yes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Discord": {
+      "main": [
+        []
+      ]
+    },
+    "High Urgency": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category == \"Access\"": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Human Approval == Yes": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Complaint Received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "0049ef69-fabc-40e3-830d-07cad4d18de2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "553512e943ba7f04a9be8c6564bdf53e99760923ce4f54ddfd89c7039f74c3d7"
+  },
+  "id": "xlxDtV2LL2BCaHul",
+  "tags": []
+}

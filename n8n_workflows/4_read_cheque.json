@@ -1,0 +1,328 @@
+{
+  "name": "4_read_cheque",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1DvoVTKx0vrTnfvLpTM6b5gqCPUafSvbi",
+          "mode": "list",
+          "cachedResultName": "cheque_images",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1DvoVTKx0vrTnfvLpTM6b5gqCPUafSvbi"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        -112
+      ],
+      "id": "5e58f7bd-9566-4405-b9ea-5b41b27ee7b8",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dLwq2uXe8V30gayT",
+          "name": "ekahate-gdrive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -832,
+        -112
+      ],
+      "id": "f5e7cecb-203e-4ca7-a82c-c704f8115e18",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "dLwq2uXe8V30gayT",
+          "name": "ekahate-gdrive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Extract payer, payee, amount, bank, date fields from the cheque image. \n\nGive output exactly in this format:\nPayer name: Actual payer name\nPayee name: Actual payee name\nDate: yyyy-mm-dd\nAmount: Numeric value only\nBank: Actual Bank Name",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        -112
+      ],
+      "id": "a6fe5f14-1548-4ec8-94d2-aac56dcbe8a6",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "7JwEKdpjfIHANu8p",
+          "name": "Gemini-API-Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.content.parts[0].text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "Payer Name",
+              "description": "Payer Name"
+            },
+            {
+              "name": "Payee Name",
+              "description": "Payee Name"
+            },
+            {
+              "name": "Date",
+              "type": "date",
+              "description": "Date"
+            },
+            {
+              "name": "Amount",
+              "type": "number",
+              "description": "Amount"
+            },
+            {
+              "name": "Bank",
+              "description": "Bank"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        -416,
+        -112
+      ],
+      "id": "6c339a3a-2d75-4042-92b2-5ffb54b6f613",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        64
+      ],
+      "id": "1521cb78-b5fd-471e-a5a9-04ff57ff6ccb",
+      "name": "Ollama Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "eyaO4Vf1gJCs1KgI",
+          "name": "Local-Ollama"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "839ea75f-b88c-4fb7-b69b-6bc2a2d82d61",
+              "name": "output['Payer Name']",
+              "value": "={{ $json.output['Payer Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "9bb862d5-eb9a-4d9c-9d82-7370574983e7",
+              "name": "output['Payee Name']",
+              "value": "={{ $json.output['Payee Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "f9a6f377-72aa-4489-a219-e51eea48385c",
+              "name": "output.Date",
+              "value": "={{ $json.output.Date }}",
+              "type": "string"
+            },
+            {
+              "id": "98dbb16c-b7f6-4a5d-a6f2-708394be413d",
+              "name": "output.Amount",
+              "value": "={{ $json.output.Amount }}",
+              "type": "number"
+            },
+            {
+              "id": "01698ce2-45c4-4589-9958-d9961ec3ed23",
+              "name": "output.Bank",
+              "value": "={{ $json.output.Bank }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -80,
+        -112
+      ],
+      "id": "815c2f52-1af0-43e1-87a9-43afc2112af2",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        128,
+        -112
+      ],
+      "id": "7223dcb4-32f2-486b-8db3-6ed3972ec22e",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "atulkahate-n8n",
+        "fileName": "chequedata",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [
+        336,
+        -112
+      ],
+      "id": "a035ccbe-edf6-4aa5-8ece-ff3ff9f9f83f",
+      "name": "Upload a file",
+      "credentials": {
+        "aws": {
+          "id": "eBxBedJsbOgceWa4",
+          "name": "AWS account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d58bdedf-826d-4bf7-afef-c63c261ca9f9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "553512e943ba7f04a9be8c6564bdf53e99760923ce4f54ddfd89c7039f74c3d7"
+  },
+  "id": "90NBeHVDwUSrYkps",
+  "tags": []
+}

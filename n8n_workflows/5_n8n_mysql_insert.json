@@ -1,0 +1,98 @@
+{
+  "name": "5_n8n_mysql_insert",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Order",
+        "formFields": {
+          "values": [
+            {
+              "fieldName": "Product Name",
+              "fieldLabel": "Product Name",
+              "requiredField": true
+            },
+            {
+              "fieldName": "Quantity",
+              "fieldLabel": "Quantity",
+              "fieldType": "number",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4bc92908-1fd6-4710-b923-4fcc1543bdc2",
+      "name": "On form submission",
+      "webhookId": "75c6319f-c9dc-4a5e-bf19-8a4cc040aed8"
+    },
+    {
+      "parameters": {
+        "table": {
+          "__rl": true,
+          "value": "orders",
+          "mode": "list",
+          "cachedResultName": "orders"
+        },
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "product_name",
+              "value": "={{ $json['Product Name'] }}"
+            },
+            {
+              "column": "quantity",
+              "value": "={{ $json.Quantity }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        208,
+        0
+      ],
+      "id": "64f5af7f-c4e3-438e-a17b-9e8e1c2e2b17",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "mySql": {
+          "id": "ujCiIyVZA4to7uqO",
+          "name": "MySQL account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "081ad1d6-640a-4824-bf17-41aabe4ba1df",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "553512e943ba7f04a9be8c6564bdf53e99760923ce4f54ddfd89c7039f74c3d7"
+  },
+  "id": "Drp15gmGlXoJ8InX",
+  "tags": []
+}

@@ -1,0 +1,197 @@
+{
+  "name": "3_form_sheet_email",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Feedback Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Your Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Course",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Agentic AI"
+                  },
+                  {
+                    "option": "Gen AI"
+                  },
+                  {
+                    "option": "ML"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Feedback",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0e3f4b4b-ac2e-47f5-9f43-6fdf318aaae7",
+      "name": "On form submission",
+      "webhookId": "dd8b863a-ae95-4c3c-bddf-658568b0af9d"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1wA0AAauU9cdkhW8_O3nxNSMDkMTNaa5Za19oao3_vGU",
+          "mode": "list",
+          "cachedResultName": "n8n_test",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wA0AAauU9cdkhW8_O3nxNSMDkMTNaa5Za19oao3_vGU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wA0AAauU9cdkhW8_O3nxNSMDkMTNaa5Za19oao3_vGU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "User Name": "={{ $json['Your Name'] }}",
+            "Email": "={{ $json['Your Email'] }}",
+            "Course": "={{ $json['Your Course'] }}",
+            "Feedback": "={{ $json['Your Feedback'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "User Name",
+              "displayName": "User Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Course",
+              "displayName": "Course",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback",
+              "displayName": "Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "949d934b-d61a-42f3-89a9-d1e6a498151f",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "hISyalXGc1JynvZb",
+          "name": "ekahate-google"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Acknowledging your feedback",
+        "message": "=Dear  {{ $json['User Name'] }},\n\nThank you for your feedback about the course {{ $json.Course }}.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "d9783a2f-9dc3-4352-aaff-f234e5c57c88",
+      "name": "Send a message",
+      "webhookId": "da5479c6-ac14-4768-a1b8-b360a5b87221",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LMedC1Cba6iLoS4B",
+          "name": "ekahate-gmail"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7f585a98-0608-4c1b-a9bd-c42ba495ab9f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "553512e943ba7f04a9be8c6564bdf53e99760923ce4f54ddfd89c7039f74c3d7"
+  },
+  "id": "IURVWC0pYm0hTvDg",
+  "tags": []
+}

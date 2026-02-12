@@ -1,0 +1,324 @@
+{
+  "name": "10_customer_inquiry",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "02b53661-ab0b-4a05-9149-1371957a356f",
+              "leftValue": "={{ $json['COUNT(*)'] }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1376,
+        -640
+      ],
+      "id": "b02da4b1-aa12-467f-b6ec-70af2c096fda",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select COUNT(*) from n8n.realpage_accounts\nwhere customer_id =  '{{ $json['Customer ID'] }}'\n  and account_type = '{{ $json['Account Type'] }}'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        -1584,
+        -640
+      ],
+      "id": "bf9d6223-b170-4c86-8a93-96e7f8e46c9d",
+      "name": "Check if Valid Customer",
+      "credentials": {
+        "mySql": {
+          "id": "Z6ofXqTD4C3AILN8",
+          "name": "MySQL account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Customer Query",
+        "formFields": {
+          "values": [
+            {
+              "fieldName": "Customer ID",
+              "fieldLabel": "Customer ID",
+              "requiredField": true
+            },
+            {
+              "fieldName": "Account Type",
+              "fieldLabel": "Account Type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Savings Account"
+                  },
+                  {
+                    "option": "Credit Card"
+                  },
+                  {
+                    "option": "Loan"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldName": "Your Query",
+              "fieldLabel": "Your Query",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [
+        -1792,
+        -640
+      ],
+      "id": "f3924441-31bf-4484-9bdc-67479ddf163b",
+      "name": "Get Customer Query",
+      "webhookId": "ca60adba-4b4d-4b06-99b0-5a75e620942d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/embeddings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"text-embedding-3-small\",\n  \"input\": \"{{ $('Get Customer Query').item.json['Your Query'] }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1072,
+        -704
+      ],
+      "id": "fa71cdf8-5b00-44f6-b7b2-040fe3793074",
+      "name": "Embed User Query"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://qdrant:6333/collections/customer_queries/points/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"vector\": {{ JSON.stringify($json.data[0].embedding) }},\n  \"limit\": 3,\n  \"with_payload\": true\n}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -864,
+        -704
+      ],
+      "id": "bf756484-a52c-49e6-ad4e-cbc40c488699",
+      "name": "Do Vector Search"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6b91c55e-3c17-4642-b7e7-6f93c5e99e96",
+              "name": "answer",
+              "value": "={{ $json.result[0].payload.answer }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -656,
+        -704
+      ],
+      "id": "dd8ff583-6939-4807-9791-352df1dbf76d",
+      "name": "Extract Vector DB Response"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT customer_name, customer_email\nFROM realpage_accounts\nWHERE customer_id = \"{{ $('Get Customer Query').item.json['Customer ID'] }}\"\n  AND account_type = \"{{ $('Get Customer Query').item.json['Account Type'] }}\"",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        -448,
+        -704
+      ],
+      "id": "fc9e5337-293c-4299-ba4b-2351edfb0108",
+      "name": "Get User Name and Email",
+      "credentials": {
+        "mySql": {
+          "id": "Z6ofXqTD4C3AILN8",
+          "name": "MySQL account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "Your Inquiry",
+        "message": "=Dear  {{ $json.customer_name }},\n\nThis is in response to your query.\n\nYour query: {{ $('Get Customer Query').item.json['Your Query'] }}\n\nOur response: {{ $('Do Vector Search').item.json.result[0].payload.answer }}\n\nThanking you.\nOur n8n Workflow",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        -704
+      ],
+      "id": "1464a95d-3035-4361-a082-27c591c22897",
+      "name": "Respond to User",
+      "webhookId": "1552dfdb-a2fa-45cc-9ac5-c1e729a53b19",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LMedC1Cba6iLoS4B",
+          "name": "ekahate-gmail"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check if Valid Customer": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Customer Query": {
+      "main": [
+        [
+          {
+            "node": "Check if Valid Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Embed User Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed User Query": {
+      "main": [
+        [
+          {
+            "node": "Do Vector Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Do Vector Search": {
+      "main": [
+        [
+          {
+            "node": "Extract Vector DB Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Vector DB Response": {
+      "main": [
+        [
+          {
+            "node": "Get User Name and Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get User Name and Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "165195d9-7d93-4cf9-8e4d-51654a817285",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "553512e943ba7f04a9be8c6564bdf53e99760923ce4f54ddfd89c7039f74c3d7"
+  },
+  "id": "2rYOuBm6ZIHQ0U0S",
+  "tags": []
+}

@@ -1,0 +1,245 @@
+{
+  "name": "7_fraud_detection",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0ffffd89-2077-4e66-8ce4-48092950ec1b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/home/node/.n8n-files/transactions.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d24fc7ca-55b2-4e71-b43f-34b6ce58804e",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "c07d418a-90a3-428c-90a3-fa01da4b791e",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8406f4ea-0322-4038-aab8-723c9942dd71",
+              "leftValue": "={{ $json['count(*)'] }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        0
+      ],
+      "id": "7d60c624-a196-4a48-9b3a-db10c31ba3ac",
+      "name": "Duplicate?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select count(*) from transactions\nwhere dr_account = $1\n  and cr_account = $2\nand amount = $3\nand tr_date = $4",
+        "options": {
+          "queryReplacement": "={{ $json.dr }}, {{ $json.cr }},  {{ $json.amt }}, {{ $json.dt }}"
+        }
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        640,
+        0
+      ],
+      "id": "6b97014a-6fed-4168-8eea-0da91d8c5188",
+      "name": "Check for Duplicates",
+      "credentials": {
+        "mySql": {
+          "id": "ujCiIyVZA4to7uqO",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "newdelthis@gmail.com",
+        "subject": "Fraud Suspected!",
+        "message": "=The following transaction is duplicated and looks suspicious! Please advise what to do.\n\n\nDebit Account: {{ $('Extract from File').item.json.dr }}\nCredit Account: {{ $('Extract from File').item.json.cr }}\nAmount: {{ $('Extract from File').item.json.amt }}\nDate:  {{ $('Extract from File').item.json.dt }}\n\nFraud Alert Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        96
+      ],
+      "id": "e72a243d-d01c-46f7-a3d2-9db24cc81b2a",
+      "name": "Fraud Alert!",
+      "webhookId": "6ef0c543-e876-49a5-8824-444821ae2df4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LMedC1Cba6iLoS4B",
+          "name": "ekahate-gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "table": {
+          "__rl": true,
+          "value": "transactions",
+          "mode": "list",
+          "cachedResultName": "transactions"
+        },
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "dr_account",
+              "value": "={{ $('Extract from File').item.json.dr }}"
+            },
+            {
+              "column": "cr_account",
+              "value": "={{ $('Extract from File').item.json.cr }}"
+            },
+            {
+              "column": "amount",
+              "value": "={{ $('Extract from File').item.json.amt }}"
+            },
+            {
+              "column": "tr_date",
+              "value": "={{ $('Extract from File').item.json.dt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1104,
+        -64
+      ],
+      "id": "736ff817-b4e1-4cd1-a536-ad77f2079559",
+      "name": "Add Transaction to Table",
+      "credentials": {
+        "mySql": {
+          "id": "ujCiIyVZA4to7uqO",
+          "name": "MySQL account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Check for Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Add Transaction to Table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fraud Alert!",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "5e2762f4-2c13-4231-83d8-48affc20ec24",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "553512e943ba7f04a9be8c6564bdf53e99760923ce4f54ddfd89c7039f74c3d7"
+  },
+  "id": "kKaFT7GS1SYBAS1y",
+  "tags": []
+}

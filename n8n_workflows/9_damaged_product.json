@@ -1,0 +1,267 @@
+{
+  "name": "9_damaged_product",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "support/message",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fdce01f4-d10d-4556-9346-cdd76eeb9811",
+      "name": "Webhook - Get Complaint and Image",
+      "webhookId": "1c5766d6-ce26-4de4-a9f7-625eabef4446"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select count(*) \nfrom orders_2\nwhere user_id = $1 and order_id = $2",
+        "options": {
+          "queryReplacement": "={{$json.body.user_id}}, {{$json.body.order_id}}\n"
+        }
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        336,
+        -128
+      ],
+      "id": "2cf292b5-8b46-4e18-bd27-dfa4fcb721c2",
+      "name": "Verify Order Exists",
+      "credentials": {
+        "mySql": {
+          "id": "ujCiIyVZA4to7uqO",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "You are a damage verification agent.\n\nCheck if the image shows a damaged or broken electronic product.\n\nReturn ONLY valid JSON.\nDo NOT use markdown.\nDo NOT add ```json or ```.\n\nJSON schema:\n{\n  \"is_damaged\": true|false,\n  \"damage_type\": \"string\",\n  \"confidence\": \"low|medium|high\"\n}",
+        "inputType": "binary",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        336,
+        48
+      ],
+      "id": "e8b95aaa-0e2d-4715-bc67-916bc14a14d6",
+      "name": "Check if Product Damaged",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "7JwEKdpjfIHANu8p",
+          "name": "Gemini-API-Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ab065217-b3e4-448e-984b-efc79cd7684b",
+              "leftValue": "={{ $json['count(*)'] }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        544,
+        -128
+      ],
+      "id": "c5f8c077-eb06-4216-b32d-0e947d0a99f5",
+      "name": "Order Found"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8c65eeda-23c4-469c-842a-098165068f77",
+              "name": "content.parts[0].text",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        32
+      ],
+      "id": "1a189748-e390-4085-abcb-389eb5b24e34",
+      "name": "Verify Image Check Results"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4cdcd55d-7eae-41c3-a8c1-6e5534c2a5e2",
+              "leftValue": "={{\n  JSON.parse($json.content.parts[0].text).is_damaged === true &&\n  JSON.parse($json.content.parts[0].text).confidence.trim() === 'high'\n}}\n\n",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        704,
+        32
+      ],
+      "id": "dadebd2a-0d50-4905-8b46-e8cdd9c60168",
+      "name": "Product Damaged"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"response\": \"You will receive a refund\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1008,
+        -32
+      ],
+      "id": "501c61b8-c5e4-4ac3-93dd-61bb58f3ca4e",
+      "name": "Refund"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Get Complaint and Image": {
+      "main": [
+        [
+          {
+            "node": "Verify Order Exists",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check if Product Damaged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Order Exists": {
+      "main": [
+        [
+          {
+            "node": "Order Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Product Damaged": {
+      "main": [
+        [
+          {
+            "node": "Verify Image Check Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Order Found": {
+      "main": [
+        [
+          {
+            "node": "Refund",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Image Check Results": {
+      "main": [
+        [
+          {
+            "node": "Product Damaged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product Damaged": {
+      "main": [
+        [
+          {
+            "node": "Refund",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "60194152-8da7-4922-a873-af203d7acb81",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "553512e943ba7f04a9be8c6564bdf53e99760923ce4f54ddfd89c7039f74c3d7"
+  },
+  "id": "65YBuNQXPFjxDMvS",
+  "tags": []
+}
