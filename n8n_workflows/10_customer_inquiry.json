@@ -112,7 +112,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer "
+              "value": " "
             },
             {
               "name": "Content-Type",
